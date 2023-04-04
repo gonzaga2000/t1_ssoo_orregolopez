@@ -1,0 +1,7 @@
+{
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "C:/Users/Gonzalo/Desktop/T1_SOO/include",
+        "C:/Users/Gonzalo/Desktop/T1_SOO/src"
+    ]
+}

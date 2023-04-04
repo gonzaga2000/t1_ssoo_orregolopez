@@ -1,0 +1,22 @@
+./fifoss example.txt output.csv
+
+
+for (int i = 0; i < numero_procesos; i++) {
+        scanf("%s %d %d %d %s", &nombre, &tiempo_inicio, &burst, &io, &path);
+        Process *proceso = create_process(nombre, tiempo_inicio, burst, io, path);
+		printf("tiempo: %d\n", proceso->tiempo_inicio);
+	}
+
+
+    Process *create_process(char *nombre, int tiempo_inicio, int burst,
+    int io, char *path) {
+    Process *process = malloc(sizeof(Process));
+    process->nombre = malloc(strlen(nombre) + 1);
+    strcpy(process->nombre, nombre);
+    process->tiempo_inicio = tiempo_inicio;
+    process->burst = burst;
+    process->io = io;
+    process->path = malloc(strlen(path) + 1);
+    strcpy(process->path, path);
+    return process;
+}
