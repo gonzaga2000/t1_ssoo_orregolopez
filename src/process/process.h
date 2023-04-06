@@ -1,12 +1,20 @@
 #pragma once
 #include <stddef.h>
 #include <string.h>
+#include <time.h>
 
 struct Process {
     char *nombre;
     int tiempo_inicio;
     int pid;
+    int orden;
     int estado;
+    double ingreso_waiting;
+    double waiting_time;
+    double response_time;
+    double turnaround;
+    int primera_vez;
+    int n_veces_cpu;
     int burst;
     int io;
     char *path;
@@ -15,6 +23,4 @@ struct Process {
 };
 
 struct Process *create_process(char *nombre, int tiempo_inicio, int burst, int io, char *path);
-
-
-void destroy_process(struct Process* process);
+void run_process(struct Process *proceso, char* path, char * const argv[]);
