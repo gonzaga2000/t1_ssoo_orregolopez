@@ -19,8 +19,7 @@ struct Queue {
 struct Queue *crear_lista();
 void eliminar(struct Queue *queue);
 void agregar(struct Queue *queue, struct Process *process);
-void agregar_alfinal(struct Queue *queue, struct Process *proceso);
 void check_waiting(struct Queue *fifo, int tiempo);
-void ordenar_fifo(struct Queue *fifo);
+void mover_alfinal(struct Queue *fifo);
 
 

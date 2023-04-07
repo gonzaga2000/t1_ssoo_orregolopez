@@ -14,22 +14,37 @@ struct Queue *crear_lista() {
     return queue;
 }
 
-void agregar_alfinal(struct Queue *queue, struct Process *process) {
-    struct Node *node = malloc(sizeof(struct Node));
-    if (node == NULL) {
-        return;
+
+void check_waiting(struct Queue *fifo, int clock) {
+    struct Node *current = fifo->head;
+    while (current != NULL) {
+        struct Process *proceso = current->process;
+        if ((double)(clock/CLOCKS_PER_SEC)>= current->process->ingreso_waiting + current->process->io) {
+            // Calculamos el tiempo de ingreso a ready
+            proceso->estado = 0;
+        } else {
+            current = current->next;
+        }
     }
+}
 
-    node->process = process;
-    node->next = NULL;
 
-    if (queue->head == NULL) {
-        queue->head = node;
-    } else {
-        queue->tail->next = node;
-    }
 
-    queue->tail = node;
+
+void mover_alfinal(struct Queue *fifo) {
+    // si hay un solo eleento en la fifo, no se hace nada
+    if (fifo->head == fifo->tail) return;
+
+    // se guarda el nodo a mover (head)
+    struct Node *nodo_a_mover = fifo->head;
+
+    // se actualiza el puntero head
+    fifo->head = nodo_a_mover->next;
+
+    // se actualiza el puntero tail
+    fifo->tail->next = nodo_a_mover;
+    nodo_a_mover->next = NULL;
+    fifo->tail = nodo_a_mover;
 }
 
 void agregar(struct Queue *queue, struct Process *process) {

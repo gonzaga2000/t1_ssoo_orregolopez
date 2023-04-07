@@ -6,45 +6,10 @@
 #include <time.h>
 #include <signal.h>
 
-/*
-void ordenar_fifo(struct Queue *fifo) {
-    struct Node *nodo_actual, *nodo_siguiente, *nodo_temp;
-    struct Process *proceso_actual, *proceso_siguiente;
-    int intercambio = 1;
 
-    while (intercambio) {
-        intercambio = 0;
-        nodo_actual = fifo->inicio;
 
-        while (nodo_actual->siguiente != NULL) {
-            nodo_siguiente = nodo_actual->siguiente;
-            proceso_actual = nodo_actual->proceso;
-            proceso_siguiente = nodo_siguiente->proceso;
 
-            if (proceso_actual->orden > proceso_siguiente->orden) {
-                // Intercambiar los nodos
-                nodo_temp = nodo_actual;
-                nodo_actual = nodo_siguiente;
-                nodo_siguiente = nodo_temp;
-                nodo_actual->anterior = nodo_temp->anterior;
-                nodo_temp->anterior = nodo_actual;
 
-                if (nodo_actual->siguiente != NULL) {
-                    nodo_actual->siguiente->anterior = nodo_temp;
-                }
-
-                nodo_temp->siguiente = nodo_actual->siguiente;
-                nodo_actual->siguiente = nodo_temp;
-                intercambio = 1;
-            }
-            else {
-                nodo_actual = nodo_siguiente;
-            }
-        }
-    }
-}
-
-*/
 
 
 struct Process *create_process(char *nombre, int tiempo_inicio, int burst, int io, char *path) {
@@ -90,25 +55,32 @@ void destroy_process(struct Process* process) {
 
 pid_t padre_pid;
 
-void handle_sigcont(int signum) {
-    // Manejar la señal SIGCONT
-}
+
 
 void handle_sigstop(int signum) {
     // Manejar la señal SIGSTOP
 }
 
-void handle_sigalrm(int signum) {
-    kill(padre_pid, SIGSTOP);
+void handle_sigcont(int signum) {
+    // Manejar la señal SIGCONT
+    printf("Proceso hijo reanudado.\n");
 }
 
-void run_process(struct Process *proceso, char* path, char * const argv[]) {
+void handle_sigalrm(int signum) {
+    // Manejar la señal SIGALRM
+    kill(padre_pid, SIGSTOP);
+    printf("Tiempo de CPU para el proceso hijo ha terminado. Enviando SIGSTOP...\n");
+    sleep(1); // Asegurarse de que el proceso hijo esté detenido antes de reanudarlo
+    kill(padre_pid, SIGCONT);
+}
+
+void run_process(struct Process *proceso) {
     pid_t pid = fork();
-    pid_t parent_pid = getppid();
-    char *array_auxiliar[proceso->n_argumentos];
+    pid_t parent_pid = getpid(); // Corregido aquí, debe ser getpid() en vez de getppid()
     if (pid == 0) {
         // el proceso hijito
-        execv(path, array_auxiliar);
+        char* arr[] = { proceso->path, NULL }; // Corregido aquí, se deben usar los argumentos originales
+        execv(proceso->path, arr);
         exit(0);
     } else if (pid > 0) {
         // Proceso papá
@@ -133,14 +105,15 @@ void run_process(struct Process *proceso, char* path, char * const argv[]) {
 
         // aca obtengo el tiempo, para calcular cpu
         int clock_cpu = 0;
-        
+        clock_t start = clock(); // Agregado aquí, se guarda el tiempo de inicio
 
         // Establecer alarma
-        alarm(proceso->burst);
+        int tiempo_restante = proceso->burst;
+while (tiempo_restante > 0) {
+    tiempo_restante--;
+}
 
         while (1) {
-            while(1){
-                clock_cpu++;
             pid_t wpid = waitpid(pid, &status, WUNTRACED);
 
             if (wpid == -1) {
@@ -150,11 +123,11 @@ void run_process(struct Process *proceso, char* path, char * const argv[]) {
 
             if (WIFEXITED(status)) {
                 // Hijo terminó
-                double elapsed_s = (double) clock_cpu / CLOCKS_PER_SEC;
-
+                clock_t end = clock(); // Agregado aquí, se guarda el tiempo de finalización
+                double elapsed_s = ((double) (end - start)) / CLOCKS_PER_SEC; // Calculado el tiempo transcurrido
                 printf("Proceso %s terminado en %.6f segundos.\n", proceso->nombre, elapsed_s);
                 proceso->turnaround = elapsed_s;
-                proceso->pid = getppid();
+                proceso->pid = pid; // Corregido aquí, debe ser pid en vez de getppid()
                 proceso->estado = 3;
 
                 break;
@@ -166,10 +139,11 @@ void run_process(struct Process *proceso, char* path, char * const argv[]) {
                 // Esperar a recibir SIGCONT para reanudar
                 pause();
             }
-        }
+
+            clock_cpu++; // Corregido aquí, se debe aumentar el tiempo de CPU en cada iteración del while
         }
     } else {
-          // Error en fork()
+        // Error en fork()
         perror("fork");
         exit(EXIT_FAILURE);
     }
